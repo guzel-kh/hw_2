@@ -1,0 +1,26 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+{% load my_tags %}
+<div class="container">
+    <div class="row">
+        {% for object in object_list %}
+            <div class="card mb-3" style="max-width: 540px;">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ object.preview|mediapath }}" class="img-fluid rounded-start" alt="Изображение отсутствует">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ object.name | title }}</h5>
+                            <p class="card-text">{{ object.description }}</p>
+                            <h5 class="card-title">{{ object.price }} РУБ.</h5>
+                            <p class="card-text"><small class="text-body-secondary">Создан {{ object.created_at }}</small></p>
+                            <p class="card-text"><small class="text-body-secondary">Изменен {{ object.updated_at }}</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endblock %}
+</div>
