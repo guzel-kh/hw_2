@@ -16,7 +16,7 @@
                         <h5 class="card-title">{{ object.name | title }}</h5>
                         <p class="card-text">{{ object.description|slice:"0:100" }}</p>
                         <h5 class="card-title">{{ object.price }} РУБ.</h5>
-                        <a href="{% url 'catalog:product' object.pk %}" class="btn btn-primary">Подробнее</a>
+                        <a href="{% url 'catalog:product_detail' object.pk %}" class="btn btn-primary">Подробнее</a>
                     </div>
                 </div>
             </div>
