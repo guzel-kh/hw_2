@@ -1,0 +1,35 @@
+{{% extends 'catalog/base.html' %}
+{% block content %}
+<div class="col-12 mb-5">
+    <a class="btn btn-outline-primary" href="{% url 'blog:create' %}">Добавить пост</a>
+</div>
+<div class="row text-center">
+    {% for object in object_list %}
+    <div class="col-12">
+        <div class="card mb-3" style="max-width: 50 px;">
+            <div class="row g-0">
+                <div class="card-header">
+                    <h3 class="card-title">{{ object.title }}</h3>
+                    <h5><small class="text-body-secondary">{{ object.slug }}</small></h5>
+                </div>
+                <div class="card-body">
+                    <img src="/media/{{ object.preview }}" class="img-fluid rounded-start"
+                         alt="Изображение отсутствует">
+                    <p>
+                        {{ object.content|slice:"0:100" }}
+                    </p>
+                    <div class="row">
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="{% url 'blog:view' object.pk %}" type="button" class="btn btn-primary btn-sm">Читать
+                                полностью</a>
+                            <a href="{% url 'blog:edit' object.pk %}" type="button" class="btn btn-primary btn-sm">Редактировать</a>
+                            <a href="{% url 'blog:delete' object.pk %}" type="button" class="btn btn-primary btn-sm">Удалить</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
