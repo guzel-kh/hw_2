@@ -1,29 +1,61 @@
+from django.db.models import Subquery, OuterRef
+from django.forms import inlineformset_factory
 from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView
 
-from catalog.forms import ProductForm
-from catalog.models import Product
+from catalog.forms import ProductForm, VersionForm, VersionFormset
+from catalog.models import Product, Version
 
 
 class ProductCreateView(CreateView):
+    """
+    Класс для создания продукта
+    """
     model = Product
     # fields = ('name', 'description', 'preview', 'category', 'price')
     form_class = ProductForm
     success_url = reverse_lazy('catalog:list')
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        if self.request.method == "POST":
+            context_data['formset'] = VersionFormset(self.request.POST, instance=self.object)
+        else:
+            context_data['formset'] = VersionFormset(instance=self.object)
+        return context_data
+
+    def form_valid(self, form):
+        context_data = self.get_context_data()
+        formset = context_data['formset']
+        if form.is_valid() and formset.is_valid():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
 
 class ProductListView(ListView):
+    """
+    Класс для отображения списка продуктов
+    """
     model = Product
 
+    def get_context_data(self,*args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+        products = Product.objects.all()
 
-# def index(request):
-#     product_list = Product.objects.all()
-#     context = {
-#         'object_list': product_list,
-#         'title': 'Главная'
-#     }
-#     return render(request, 'catalog/index.html', context)
+        for product in products:
+            versions = Version.objects.filter(product=product)
+            active_versions = versions.filter(is_active=True)
+            if active_versions:
+                product.active_version = active_versions.last().version_number
+            else:
+                product.active_version = '-'
+        context_data['object_list'] = products
+        return context_data
 
 
 def contacts(request):
@@ -33,17 +65,17 @@ def contacts(request):
         message = request.POST.get('message')
         print(f'You have new message from {name}({phone}): {message}')
 
-    context = {
-        'title': 'Контакты'
-    }
+    context = {'title': 'Контакты'}
     return render(request, 'catalog/contacts.html', context)
 
 
 class ProductUpdateView(UpdateView):
+    """
+    класс для редактирования Продукта
+    """
     model = Product
-    fields = ('name', 'description', 'preview', 'price')
-    # form_class = ProductForm
-    success_url = reverse_lazy('catalog:list')
+    form_class = ProductForm
+    # success_url = reverse_lazy('catalog:detail')
 
 # def toggle_activity(request, pk):
 #     product_item = get_object_or_404(Product,pk=pk)
@@ -53,10 +85,36 @@ class ProductUpdateView(UpdateView):
 #         product_item.is_active = True
 #     product_item.save()
 #
-#     return redirect(reverse('catalog:index'))
+#     return redirect(reverse('catalog:list'))
+
+    def get_success_url(self, *args, **kwargs):
+        return reverse('catalog:edit', args=[self.get_object().pk])
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        if self.request.method == "POST":
+            context_data['formset'] = VersionFormset(self.request.POST, instance=self.object)
+        else:
+            context_data['formset'] = VersionFormset(instance=self.object)
+        return context_data
+
+    def form_valid(self, form):
+        context_data = self.get_context_data()
+        formset = context_data['formset']
+        if form.is_valid() and formset.is_valid():
+            self.object = form.save(commit=False)
+            formset.instance = self.object
+            formset.save()
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
 class ProductDetailView(DetailView):
+    """
+    Класс для просмотра Продукта
+    """
     model = Product
 
 
@@ -70,29 +128,9 @@ class ProductDetailView(DetailView):
 
 
 class ProductDeleteView(DeleteView):
+    """
+    Класс для удаления Продукта
+    """
     model = Product
     success_url = reverse_lazy('catalog:list')
-
-
-
-
-
-
-
-# class VersionCreateView(CreateView):
-#     model = Version
-#     # form_class = VersionForm
-#     success_url = reverse_lazy('catalog:index')
-#
-#     # def form_valid(self, form):
-#     #     product_pk = self.kwargs['pk']  # Получаем pk продукта из URL
-#     #     product = Product.objects.get(pk=product_pk)  # Получаем объект продукта
-#     #     form.instance.product = product  # Устанавливаем продукт в поле версии
-#     #     return super().form_valid(form)
-#
-#
-# class VersionListView(ListView):
-#     model = Product
-#     # extra_context = {'title': 'Продукты'}
-
 
