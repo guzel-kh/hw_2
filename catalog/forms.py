@@ -20,9 +20,9 @@ class ProductForm(StyleFormMixin, forms.ModelForm):
 
     class Meta:
         model = Product
-        fields = '__all__'
+        # fields = '__all__'
         # fields = ('name', 'description', 'preview', 'category', 'price',)
-        # exclude = ('preview',)
+        exclude = ('owner',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

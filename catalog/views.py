@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Subquery, OuterRef
 from django.forms import inlineformset_factory
 from django.shortcuts import render
@@ -8,7 +9,7 @@ from catalog.forms import ProductForm, VersionForm, VersionFormset
 from catalog.models import Product, Version
 
 
-class ProductCreateView(CreateView):
+class ProductCreateView(CreateView, LoginRequiredMixin):
     """
     Класс для создания продукта
     """
@@ -16,6 +17,11 @@ class ProductCreateView(CreateView):
     # fields = ('name', 'description', 'preview', 'category', 'price')
     form_class = ProductForm
     success_url = reverse_lazy('catalog:list')
+
+    def form_valid(self, form):
+        dog = form.save()
+
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -29,7 +35,9 @@ class ProductCreateView(CreateView):
         context_data = self.get_context_data()
         formset = context_data['formset']
         if form.is_valid() and formset.is_valid():
-            self.object = form.save()
+            self.object = form.save(commit=False)
+            self.object.owner = self.request.user
+            self.object.save()
             formset.instance = self.object
             formset.save()
             return super().form_valid(form)
@@ -69,7 +77,7 @@ def contacts(request):
     return render(request, 'catalog/contacts.html', context)
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(UpdateView, LoginRequiredMixin):
     """
     класс для редактирования Продукта
     """
