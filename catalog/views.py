@@ -1,15 +1,17 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Subquery, OuterRef
 from django.forms import inlineformset_factory
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView
 
-from catalog.forms import ProductForm, VersionForm, VersionFormset
+from catalog.forms import ProductForm, VersionForm, VersionFormset, ProductModeratorForm
 from catalog.models import Product, Version
 
 
-class ProductCreateView(CreateView, LoginRequiredMixin):
+class ProductCreateView(LoginRequiredMixin, CreateView):
     """
     Класс для создания продукта
     """
@@ -17,11 +19,6 @@ class ProductCreateView(CreateView, LoginRequiredMixin):
     # fields = ('name', 'description', 'preview', 'category', 'price')
     form_class = ProductForm
     success_url = reverse_lazy('catalog:list')
-
-    def form_valid(self, form):
-        dog = form.save()
-
-        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -77,26 +74,25 @@ def contacts(request):
     return render(request, 'catalog/contacts.html', context)
 
 
-class ProductUpdateView(UpdateView, LoginRequiredMixin):
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     """
     класс для редактирования Продукта
     """
     model = Product
     form_class = ProductForm
+    # permission_required = "catalog.change_product"
     # success_url = reverse_lazy('catalog:detail')
-
-# def toggle_activity(request, pk):
-#     product_item = get_object_or_404(Product,pk=pk)
-#     if product_item.is_active:
-#         product_item.is_active = False
-#     else:
-#         product_item.is_active = True
-#     product_item.save()
-#
-#     return redirect(reverse('catalog:list'))
 
     def get_success_url(self, *args, **kwargs):
         return reverse('catalog:edit', args=[self.get_object().pk])
+
+    def test_func(self):
+        """
+        Проверка пользователя, является ли владельцем продукта или модератором
+        """
+        user = self.request.user
+        author = self.get_object().owner
+        return user == author or user.groups.filter(name='moderator').exists()
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -118,8 +114,29 @@ class ProductUpdateView(UpdateView, LoginRequiredMixin):
         else:
             return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
+    def get_form_class(self):
+        user = self.request.user
+        if user == self.object.owner:
+            return ProductForm
+        if user.has_perm('catalog.can_cancel_publish'):
+            return ProductModeratorForm
+        raise PermissionDenied
 
-class ProductDetailView(DetailView):
+
+@login_required
+def toggle_publish(request, pk):
+    product_item = get_object_or_404(Product, pk=pk)
+    if request.user.has_perm('catalog.can_cancel_publish') or request.get_object().owner:
+        if product_item.is_published:
+            product_item.is_published = False
+        else:
+            product_item.is_published = True
+        product_item.save()
+
+        return redirect(reverse('catalog:list'))
+
+
+class ProductDetailView(LoginRequiredMixin, DetailView):
     """
     Класс для просмотра Продукта
     """
@@ -135,7 +152,7 @@ class ProductDetailView(DetailView):
 #     return render(request, 'catalog/product.html', context)
 
 
-class ProductDeleteView(DeleteView):
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """
     Класс для удаления Продукта
     """

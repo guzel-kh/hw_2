@@ -1,0 +1,9 @@
+asgiref==3.8.1
+django==4.2
+sqlparse==0.5.0
+tzdata==2024.1
+psycopg2-binary
+pillow
+psycopg2
+ipython
+pytils

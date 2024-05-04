@@ -21,6 +21,13 @@
                         Создать
                     {% endif %}
                 </button>
+                {% if object %}
+                    {% if object.is_published %}
+                      <a class="btn btn-primary p-2" href="{% url 'catalog:toggle_publish' object.pk %}">Снять с публикации</a>
+                    {% else %}
+                      <a class="btn btn-primary p-2" href="{% url 'catalog:toggle_publish' object.pk %}">Опубликовать</a>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
         <div class="col-6">

@@ -10,6 +10,7 @@
 
     <div class="row">
         {% for object in object_list %}
+        {% if object.is_published %}
         <div class="col-md-4">
             <div class="card-deck mb-3 text-center">
                 <div class="card" style="width: 18rem;">
@@ -25,6 +26,8 @@
                 </div>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
     {% endblock %}
+</div>

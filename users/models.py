@@ -12,7 +12,6 @@ class User(AbstractUser):
 
     token = models.CharField(max_length=100, verbose_name="token", null=True, blank=True)
 
-
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 

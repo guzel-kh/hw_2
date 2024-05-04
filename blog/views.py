@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.mail import send_mail
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
@@ -5,16 +6,18 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, ListView, UpdateView, DetailView, DeleteView
 from pytils.translit import slugify
 
+import blog
 from blog.models import Post
 
 
 # Create your views here.
 
 
-class PostCreateView(CreateView):
+class PostCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Post
     fields = ('title', 'content', 'preview', 'is_published')
     success_url = reverse_lazy('blog:list')
+    permission_required = 'blog.add_post'
 
     def form_valid(self, form):
         if form.is_valid():
@@ -25,7 +28,7 @@ class PostCreateView(CreateView):
         return super().form_valid(form)
 
 
-class PostListView(ListView):
+class PostListView(LoginRequiredMixin, ListView):
     model = Post
 
     def get_queryset(self, *args, **kwargs):
@@ -34,9 +37,10 @@ class PostListView(ListView):
         return queryset
 
 
-class PostUpdateView(UpdateView):
+class PostUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Post
     fields = ('title', 'content', 'preview')
+    permission_required = 'blog.change_post'
 
     def get_success_url(self):
         return reverse('blog:view', args=[self.kwargs.get('pk')])
@@ -62,6 +66,7 @@ class PostDetailView(DetailView):
         return self.object
 
 
-class PostDeleteView(DeleteView):
+class PostDeleteView(PermissionRequiredMixin, DeleteView):
     model = Post
     success_url = reverse_lazy('blog:list')
+    permission_required = 'blog.delete_post'
