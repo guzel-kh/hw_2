@@ -1,0 +1,15 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+
+
+<div class="container">
+    <h5 class="card-title">Категории:</h5>
+    {% for object in object_list %}
+    <ul>
+        <h5 class="card-title">{{ object.name | title }}</h5>
+        <!--         <p class="card-text">{{ object.description|slice:"0:100" }}</p>-->
+    </ul>
+    {% endfor %}
+</div>
+
+{% endblock %}

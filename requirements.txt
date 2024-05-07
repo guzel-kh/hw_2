@@ -7,3 +7,4 @@ pillow
 psycopg2
 ipython
 pytils
+redis
