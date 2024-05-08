@@ -6,7 +6,7 @@ from catalog.models import Category
 
 def get_cached_categories():
     """
-    Функция для получения списка категорий из кэша
+    Функция для получения списка категорий из кэша, если кэш пуст, то получает данные из БД
     """
     if settings.CACHE_ENABLED:
         key = 'category_list'
